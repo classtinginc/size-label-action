@@ -7,22 +7,45 @@ const { Octokit } = require("@octokit/rest");
 const globrex = require("globrex");
 const Diff = require("diff");
 
-const sizes = {
-  0: "XS",
-  10: "S",
-  30: "M",
-  100: "L",
-  500: "XL",
-  1000: "XXL"
+const defaultSizes = {
+  XXS: 10,
+  XS: 30,
+  S: 60,
+  M: 100,
+  L: 300,
+  XL: 600,
+  XXL: 1000,
 };
+
+function makeSizes() {
+  const XXS = process.env.SIZE_XXS || defaultSizes.XXS;
+  const XS = process.env.SIZE_XS || defaultSizes.XS;
+  const S = process.env.SIZE_S || defaultSizes.S;
+  const M = process.env.SIZE_M || defaultSizes.M;
+  const L = process.env.SIZE_L || defaultSizes.L;
+  const XL = process.env.SIZE_XL || defaultSizes.XL;
+  const XXL = process.env.SIZE_XXL || defaultSizes.XXL;
+
+  return {
+    [XXS]: "XXS",
+    [XS]: "XS",
+    [S]: "S",
+    [M]: "M",
+    [L]: "L",
+    [XL]: "XL",
+    [XXL]: "XXL"
+  };
+}
 
 const actions = ["opened", "synchronize"];
 
 const globrexOptions = { extended: true, globstar: true };
 
+
+
 async function main() {
   debug("Running size-label-action...");
-
+  const sizes = makeSizes();
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   if (!GITHUB_TOKEN) {
     throw new Error("Environment variable GITHUB_TOKEN not set!");
@@ -72,7 +95,7 @@ async function main() {
   const changedLines = getChangedLines(isIgnored, pullRequestDiff.data);
   console.log("Changed lines:", changedLines);
 
-  const sizeLabel = getSizeLabel(changedLines);
+  const sizeLabel = getSizeLabel(changedLines, sizes);
   console.log("Matching label:", sizeLabel);
 
   const { add, remove } = getLabelChanges(
@@ -167,7 +190,7 @@ function getChangedLines(isIgnored, diff) {
     .filter(line => line[0] === "+" || line[0] === "-").length;
 }
 
-function getSizeLabel(changedLines) {
+function getSizeLabel(changedLines, sizes) {
   let label = null;
   for (const lines of Object.keys(sizes).sort((a, b) => a - b)) {
     if (changedLines >= lines) {
