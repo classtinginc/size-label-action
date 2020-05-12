@@ -8,7 +8,7 @@ const globrex = require("globrex");
 const Diff = require("diff");
 
 const defaultSizes = {
-  XXS: 10,
+  XXS: 0,
   XS: 30,
   S: 60,
   M: 100,
